@@ -90,7 +90,6 @@ function collide_map(obj,aim,flag)
 end
 -->8
 --player
-
 function player_update()
   --physics
   player.dy+=gravity
@@ -102,10 +101,11 @@ function player_update()
     player.running=true
     player.flp=true
   end
+  
   if btn(➡️) then
-    player.dx-=player.acc
+    player.dx+=player.acc  -- fixed: was -=
     player.running=true
-    player.flp=true
+    player.flp=false  -- fixed: was true
   end
   
   --slide
@@ -135,12 +135,64 @@ function player_update()
       player.landed=true
       player.falling=false
       player.dy=0
-      player.y-=(player.y+player.h)
+      player.y-=(player.y+player.h)%8
+    end
+    
+  elseif player.dy<0 then
+  player.jumping=true
+  if collide_map(player,"up",1) then
+    player.dy=0
+    end
   end
   
+  --check collisions left and right
+ if player.dx<0 then
+  if collide_map(player,"left",1) then  -- fixed: added 'then'
+    player.dx=0
+  end
+ elseif player.dx>0 then
+   if collide_map(player,"right",1) then
+     player.dx=0
+   end
+ end
+ 
+ --stop sliding
+ if player.sliding then
+   if abs(player.dx)<.2  -- note: assuming 'rbs' was meant to be 'abs'
+   or player.running then
+     player.dx=0
+     player.sliding=false
+   end
+ end
   player.x+=player.dx
   player.y+=player.dy
-  
+end
+
+function player_animate()
+  if player.jumping then
+    player.sp=7
+  elseif player.falling then
+    player.sp=8
+  elseif player.sliding then
+    player.sp=9
+  elseif player.running then
+    if time()-player.anim>.1 then
+      player.anim=time()
+      player.sp+=1
+      if player.sp>6 then
+        player.sp=3
+      end
+    end
+  else --playeridle
+    if time()-player.anim>.3 then
+      player.anim=time()
+      player.sp+=1
+      if player.sp>2 then
+        player.sp=1
+      end
+    end
+  end
+end
 __gfx__
 00000000099999900999999000999999009999999009999900999999000999999909999900000000000000000000000000000000000000000000000000000000
 00000000999999909999999009099999000999990999999900099999909999990099999909999900000000000000000000000000000000000000000000000000
